@@ -1,0 +1,32 @@
+import saopy.model
+
+from saopy.model import prov___Activity as Activity
+from saopy.model import prov___ActivityInfluence as ActivityInfluence
+from saopy.model import prov___Agent as Agent
+from saopy.model import prov___AgentInfluence as AgentInfluence
+from saopy.model import prov___Association as Association
+from saopy.model import prov___Attribution as Attribution
+from saopy.model import prov___Bundle as Bundle
+from saopy.model import prov___Collection as Collection
+from saopy.model import prov___Communication as Communication
+from saopy.model import prov___Delegation as Delegation
+from saopy.model import prov___Derivation as Derivation
+from saopy.model import prov___EmptyCollection as EmptyCollection
+from saopy.model import prov___End as End
+from saopy.model import prov___Entity as Entity
+from saopy.model import prov___EntityInfluence as EntityInfluence
+from saopy.model import prov___Generation as Generation
+from saopy.model import prov___Influence as Influence
+from saopy.model import prov___InstantaneousEvent as InstantaneousEvent
+from saopy.model import prov___Invalidation as Invalidation
+from saopy.model import prov___Location as Location
+from saopy.model import prov___Organization as Organization
+from saopy.model import prov___Person as Person
+from saopy.model import prov___Plan as Plan
+from saopy.model import prov___PrimarySource as PrimarySource
+from saopy.model import prov___Quotation as Quotation
+from saopy.model import prov___Revision as Revision
+from saopy.model import prov___Role as Role
+from saopy.model import prov___SoftwareAgent as SoftwareAgent
+from saopy.model import prov___Start as Start
+from saopy.model import prov___Usage as Usage

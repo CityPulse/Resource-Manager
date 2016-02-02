@@ -1,0 +1,32 @@
+import saopy.model
+
+from saopy.model import ct___AirPollutionIndex as AirPollutionIndex
+from saopy.model import ct___AirPollutionLevel as AirPollutionLevel
+from saopy.model import ct___AverageSpeed as AverageSpeed
+from saopy.model import ct___Category as Category
+from saopy.model import ct___CauseArea as CauseArea
+from saopy.model import ct___City as City
+from saopy.model import ct___CongestionFactor as CongestionFactor
+from saopy.model import ct___CurrentUpdate as CurrentUpdate
+from saopy.model import ct___DisruptionID as DisruptionID
+from saopy.model import ct___Distance as Distance
+from saopy.model import ct___District as District
+from saopy.model import ct___DistrictTrafficReportService as DistrictTrafficReportService
+from saopy.model import ct___EstimatedTime as EstimatedTime
+from saopy.model import ct___LevelOfInterest as LevelOfInterest
+from saopy.model import ct___MeasuredTime as MeasuredTime
+from saopy.model import ct___Node as Node
+from saopy.model import ct___ParkingCapacity as ParkingCapacity
+from saopy.model import ct___ParkingVacancy as ParkingVacancy
+from saopy.model import ct___ParkingVehicleCount as ParkingVehicleCount
+from saopy.model import ct___Place as Place
+from saopy.model import ct___Rain as Rain
+from saopy.model import ct___ReportID as ReportID
+from saopy.model import ct___SegTrafficReportService as SegTrafficReportService
+from saopy.model import ct___Status as Status
+from saopy.model import ct___Street as Street
+from saopy.model import ct___StreetTrafficReportService as StreetTrafficReportService
+from saopy.model import ct___StreetVehicleCount as StreetVehicleCount
+from saopy.model import ct___SubCategory as SubCategory
+from saopy.model import ct___Temperature as Temperature
+from saopy.model import ct___WindSpeed as WindSpeed

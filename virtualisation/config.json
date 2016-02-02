@@ -1,0 +1,28 @@
+{
+  "triplestore": {
+    "driver": "sparql",
+    "host": "localhost",
+    "port": 8890,
+    "path": "sparql/",
+    "base_uri": "http://ict-citypulse.eu/store/"
+  },
+  "rabbitmq": {
+    "host": "127.0.0.1",
+    "port": 8007
+  },
+  "interface": {
+    "global": {
+      "server.socket_host": "127.0.0.1",
+      "server.socket_port": 9090,
+      "server.thread_pool": 5
+    }
+  },
+
+  "gdi_db": {
+    "host": "localhost",
+    "port": 5438,
+    "username": "db_username",
+    "password": "db_password",
+    "database": "db_name"
+  }
+}
