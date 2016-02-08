@@ -24,12 +24,9 @@ class Completeness(QoIMetric):
             self.ratedValue = self.rewardAndPunishment.value()
             return
 
-
-
         # look for expected fields in sensor description, look only for non optional fields
         fields = self.repsys.description.fields
         fields = [x for x in fields if not self.repsys.description.field[x].optional]
-        
         
         receivedFields = data.fields
 
@@ -55,8 +52,10 @@ class Completeness(QoIMetric):
                 nrOfWrongFields += 1
                 wrongFields.add(field)
 
-        L.d("Completeness missing fields:", nrOfMissingFields, "(", ",".join(missingFields), ")")
-        L.d("Completeness wrong fields:", nrOfWrongFields, "(", ",".join(wrongFields), ")")
+        if nrOfMissingFields > 0:
+            L.d("Completeness missing fields:", nrOfMissingFields, "(", ",".join(missingFields), ")")
+        if nrOfWrongFields > 0:
+            L.d("Completeness wrong fields:", nrOfWrongFields, "(", ",".join(wrongFields), ")")
 
         length = len(self.repsys.description.fields)
         currentLength = length - nrOfMissingFields - nrOfWrongFields

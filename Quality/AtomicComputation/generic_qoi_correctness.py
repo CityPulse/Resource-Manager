@@ -78,15 +78,18 @@ class Correctness(QoIMetric):
                     if value > maxValue:
                         wrongFieldList.append(field)
 # 			print "Correctness for", self.repsys.description.fullSensorID, len(wrongFieldList), value, minValue, maxValue
-        L.d("Correctness wrong fields:", len(wrongFieldList), "(", ",".join(wrongFieldList), ")")
 
-        if data.recovered or (len(wrongFieldList) >= 1):
+        nrWrongFields = len(wrongFieldList)
+        if nrWrongFields > 0:
+            L.d("Correctness wrong fields:", nrWrongFields, "(", ",".join(wrongFieldList), ")")
+
+        if data.recovered or (nrWrongFields >= 1):
             self.rewardAndPunishment.update(False)
         else:
             self.rewardAndPunishment.update(True)
 
         self.ratedValue = self.rewardAndPunishment.value()
-        self.absoluteValue = 1 - len(wrongFieldList) / len(data.fields)
+        self.absoluteValue = 1 - nrWrongFields / len(data.fields)
         self.min = min(self.min, self.absoluteValue)
         self.mean = ((self.updatecounter - 1) * self.mean) / self.updatecounter + float(
             self.absoluteValue) / self.updatecounter

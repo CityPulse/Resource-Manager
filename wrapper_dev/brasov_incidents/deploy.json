@@ -1,0 +1,62 @@
+[
+  {
+    "module": "brasov_incidents",
+    "class": "BrasovIncidentWrapper0",
+    "version": 1.0
+  },
+  {
+    "module": "brasov_incidents",
+    "class": "BrasovIncidentWrapper1",
+    "version": 1.0
+  },
+  {
+    "module": "brasov_incidents",
+    "class": "BrasovIncidentWrapper2",
+    "version": 1.0
+  },
+  {
+    "module": "brasov_incidents",
+    "class": "BrasovIncidentWrapper3",
+    "version": 1.0
+  },
+  {
+    "module": "brasov_incidents",
+    "class": "BrasovIncidentWrapper4",
+    "version": 1.0
+  },
+  {
+    "module": "brasov_incidents",
+    "class": "BrasovIncidentWrapper5",
+    "version": 1.0
+  },
+  {
+    "module": "brasov_incidents",
+    "class": "BrasovIncidentWrapper6",
+    "version": 1.0
+  },
+  {
+    "module": "brasov_incidents",
+    "class": "BrasovIncidentWrapper7",
+    "version": 1.0
+  },
+  {
+    "module": "brasov_incidents",
+    "class": "BrasovIncidentWrapper8",
+    "version": 1.0
+  },
+  {
+    "module": "brasov_incidents",
+    "class": "BrasovIncidentWrapper9",
+    "version": 1.0
+  },
+  {
+    "module": "brasov_incidents",
+    "class": "BrasovIncidentWrapper10",
+    "version": 1.0
+  },
+  {
+    "module": "brasov_incidents",
+    "class": "BrasovIncidentWrapper11",
+    "version": 1.0
+  }
+]

@@ -19,7 +19,14 @@ class Stat_Api(object):
             for u in uuid:
                 stats = Stats.getOrMake(u)
                 job[u] = []
-                job[u].extend(stats.getAverageProcessingTimes())
+                pTimes = stats.getAverageProcessingTimes()
+                if pTimes:
+                    job[u].extend(pTimes)
+                else:
+                    failJob = JSONObject()
+                    failJob.status = "Fail"
+                    failJob.message = "UUID not found"
+                    job[u] = failJob
         elif category:
             category = category.split(",")
             avgList = {}
@@ -39,7 +46,14 @@ class Stat_Api(object):
             job = JSONObject()
             for element in avgList:
                 job[element] = []
-                job[element].extend(avgList[element])
+                pTimes = avgList[element]
+                if pTimes:
+                    job[element].extend(pTimes)
+                else:
+                    failJob = JSONObject()
+                    failJob.status = "Fail"
+                    failJob.message = "Category not found"
+                    job[element] = failJob
         else:
             statList = Stats.getAllStats()
             for s in statList:

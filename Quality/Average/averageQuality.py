@@ -98,17 +98,14 @@ class AverageQuality(object):
     def getValues(self, t, avg=None, minimum=None, maximum=None):
         q = JSONObject()
         if avg:
-            if avg == "True":
-                q.absoluteAvg = self.qList.get(t).getAbsoluteAverage()
-                q.ratedAvg = self.qList.get(t).getRatedAverage()
+            q.absoluteAvg = self.qList.get(t).getAbsoluteAverage()
+            q.ratedAvg = self.qList.get(t).getRatedAverage()
         if minimum:
-            if minimum == "True":
-                q.absoluteMin = self.qList.get(t).getAbsoluteMin()
-                q.ratedMin = self.qList.get(t).getRatedMin()
+            q.absoluteMin = self.qList.get(t).getAbsoluteMin()
+            q.ratedMin = self.qList.get(t).getRatedMin()
         if maximum:
-            if maximum == "True":
-                q.absoluteMax = self.qList.get(t).getAbsoluteMax()
-                q.ratedMax = self.qList.get(t).getRatedMax()
+            q.absoluteMax = self.qList.get(t).getAbsoluteMax()
+            q.ratedMax = self.qList.get(t).getRatedMax()
         return q
     
     def calculate(self, absoluteValue, ratedValue):

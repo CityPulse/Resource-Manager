@@ -1,0 +1,5 @@
+{
+  "module": "twitter",
+  "class": "AarhusTwitterWrapper",
+  "version": 1.0
+}

@@ -1,0 +1,12 @@
+[
+  {
+    "module": "romaniaweather_aw",
+    "class": "RomanianWeatherAWWrapper",
+    "version": 1.0
+  },
+  {
+    "module": "romaniaweather_mr",
+    "class": "RomanianWeatherMRWrapper",
+    "version": 1.0
+  }
+]

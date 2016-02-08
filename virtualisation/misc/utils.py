@@ -55,3 +55,9 @@ def formatSensorID(sensordescription):
 
 def dictdeepcopy(aDict):
     return copy.deepcopy(aDict)
+
+def valueToBoolean(value):
+    if value:
+        if value == "True":
+            return True
+    return False

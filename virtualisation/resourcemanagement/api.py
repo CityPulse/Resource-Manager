@@ -2,7 +2,7 @@ import cherrypy
 import os.path
 
 from virtualisation.misc.jsonobject import JSONObject as JOb
-from virtualisation.misc.utils import formatSensorID
+from virtualisation.misc.utils import formatSensorID, valueToBoolean
 from virtualisation.triplestore.threadedtriplestoreadapter import ThreadedTriplestoreAdapter
 
 
@@ -514,7 +514,7 @@ class Api(object):
             if wrapper:
                 if wrapper.qoiSystem.initialised:
                     avgQualities = []
-                    avgQualities.append(wrapper.qoiSystem.getLastQoI(types=types, avg=avg, minimum=minimum, maximum=maximum))
+                    avgQualities.append(wrapper.qoiSystem.getLastQoI(types=types, avg=valueToBoolean(avg), minimum=valueToBoolean(minimum), maximum=valueToBoolean(maximum)))
                     avgQualities[-1].uuid = wrapper.getSensorDescription().uuid
                     qualities.extend(JOb(avgQualities))
                 else:
@@ -528,3 +528,4 @@ class Api(object):
                 resp.message = message
                 qualities.append(resp)
         return JOb(qualities).dumps()
+
