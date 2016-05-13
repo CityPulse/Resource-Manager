@@ -1,13 +1,6 @@
 CP_Resourcemanagement
 =====================
 
-This is the Resource Management by the EU project CityPulse. For now only the code is uploaded into this repository. Further documentation will come later.
-
-The purpose of the Resource Management is to manage Data Wrappers, which are able to fetch observation from Smart City data sources. 
-
-
--new
-
 The Resource Management componentis responsible for managing all Data Wrappers. During runtime an application developer or the CityPulse framework operator can deploy new Data Wrappers to include data from new data streams. The folder "wrapper_dev" contains examplary Data Wrappers for traffic and parking data of the city of Aarhus, Denmark as well as weather, air quality and incidents of the city of Brasov, Romania. 
 The Resource Management component can be used for the following types of scenarios:
 * Fetch live stream data via one or more Data wrappers
@@ -46,10 +39,14 @@ For the Resource management in order to run properly it needs to have access to 
 Installation
 ------------
 As mentioned before, the CityPulse Resource management requires additional libraries, which can be installed using the following command on an Ubuntu Linux installation. The Resource management is not limited to Ubuntu Linux, but no other Linux distribution has been tested so far.
+
 	sudo apt-get install python-pip libgeos++-dev libgeos-3.4.2 python-dev libpq-dev python-scipy git automake bison flex libtool gperf unzip python-matplotlib
+
 In addition, using the following command required python packages will be installed:
 	sudo pip install pika cherrypy shapely psycopg2 numpy sklearn rdflib chardet requests requests-oauthlib
+
 The Resource management uses the Virtuoso triplestore to store annotated observations. As of February 2016, the virtuoso provided with the apt-repository in Ubuntu 14.04 LTS is outdated and lacks required features. Therefore, an installation from the sources is necessary. This can be achieved with the followings commands:
+
 	wget --no-check-certificate -q https://github.com/openlink/virtuoso-opensource/archive/stable/7.zip -O virtuoso-opensource.zip
 	unzip -q virtuoso-opensource.zip
 	cd virtuoso-opensource
@@ -57,16 +54,26 @@ The Resource management uses the Virtuoso triplestore to store annotated observa
 	./configure
 	make
 	sudo make install
+
 After that start the virtuoso:
+
 	sudo /etc/init.d/virtuoso-opensource-7 start
+
 NOTE: the make command may hang after "VAD Sticker vad_dav.xml creation ..." if there is a virtuoso process running. Check with "ps ax|grep virtuoso" and kill if a virtuoso is running.
+
 Afterwards you can download the Resource Management source code from the Github repository:
+
 	git clone https://github.com/CityPulse/CP_Resourcemanagement.git
+
 The next step is to edit the configuration file with your favourite editor. An example configuration can be found in virtualisation/config.json. For details about the configuration file see Table 1.
 When running the Resource management in replay mode the python process may require a lot of file descriptors to read the historical data. Users may be required to increase a limit for file descriptors in the operating system. To change the limit on Mac OS X 10.10 and higher run the following command in a terminal:
+
 	sudo launchctl limit maxfiles 2560 unlimited
+
 This will set the limit to 2560. On Linux
+
 	ulimit -n 2560
+
 should do the trick. Add the line into the .bashrc in your home directory to make it permanent.
 
 
