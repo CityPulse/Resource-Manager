@@ -8,6 +8,7 @@ from virtualisation.sensordescription import SensorDescription
 from virtualisation.wrapper.parser.jsonparser import JSONParser
 from virtualisation.wrapper.connection.httpconnection import HttpPullConnection
 import threading
+import datetime
 from TwitterAPI import TwitterAPI, TwitterOAuth
 import mysql.connector
 from mysql.connector import errorcode
@@ -22,11 +23,12 @@ import mysql.connector.locales.eng
 
 class MysqlConfig(object):
 
-    def __init__(self, username, password, host, database):
+    def __init__(self, username, password, host, port, database):
         self.username = username
         self.password = password
         self.host = host
         self.database = database
+        self.port = port
 
     @classmethod
     def read_file_object(cls, fileobject):
@@ -39,6 +41,7 @@ class MysqlConfig(object):
             v['username'],
             v['password'],
             v['host'],
+            v['port'],
             v['database'])
 
 class TwitterConnection(HttpPullConnection):
@@ -54,14 +57,27 @@ class TwitterConnection(HttpPullConnection):
     def run_async(self):
         auth = TwitterOAuth.read_file_object(self.wrapper.getFileObject(__file__, "TwitterAPI/credentials.txt"))
         api = TwitterAPI(auth.consumer_key, auth.consumer_secret, auth.access_token_key, auth.access_token_secret)
+
+        # list of user id to follow (by Nazli)
+        """ '@StiftenAGF','@jpaarhus','#Aarhus','@AarhusKultur','@smagaarhus','@AarhusNyheder','@AarhusPortaldk',
+        '@Aarhus2017','@OpenDataAarhus', '@aarhusupdate','@AskVest','@SundhedOgOmsorg','@ArhusVejr','@aarhus_ints',
+        '@AGFFANdk','@AarhusCykelby','@VisitAarhus','@larshaahr' """
+
+        users = ['3601200017', '3370065087', '3330970365', '2911388001', '2706568231',
+			'2647614595', '2201213730', '1324132976', '1065597596', '816850003', '763614246',
+			'210987829', '159110346', '112585923', '77749562', '38227253', '36040150']
+
+        # list of terms to track
+        tracks = ['#Aarhus']
+
         try:
-            r = api.request('statuses/filter', {'locations': self.location})
-            #r = api.request('statuses/filter', {'track':'pizza'})
+            r = api.request('statuses/filter', {'locations': self.location, 'follow': ','.join(users), 'track': ','.join(tracks)})
         except:
             print r.text
 
         for item in r:
             self.tweet = item
+            # print item
             self.wrapper.update()
             if self.abort.is_set():
                 break
@@ -78,7 +94,8 @@ class TwitterParser(JSONParser):
             self.db = mysql.connector.connection.MySQLConnection(user=mysql_config.username,
                                                                  password=mysql_config.password,
                                                                  host=mysql_config.host,
-                                                                 database=mysql_config.database)
+                                                                 database=mysql_config.database,
+                                                                 port=mysql_config.port)
             self.cur = self.db.cursor()
 
             # create the table if not exists
@@ -111,7 +128,7 @@ class TwitterParser(JSONParser):
         result = JOb()
         result.text = data.text
         result.user_id = data.user.id
-        result.timestamp = data.timestamp_ms
+        result.timestamp = datetime.datetime.fromtimestamp(int(data.timestamp_ms)/1000).strftime('%Y-%m-%d %H:%M:%S') #data.timestamp_ms
         result.tweet_id = data.id
         result.bounding_box = "[" + ";".join([",".join(map(str, a)) for a in data.place.bounding_box.coordinates[0]]) + "]"
 
@@ -127,8 +144,8 @@ class TwitterParser(JSONParser):
             self.db.commit()
 
         result.geotag = self.geometry_to_wkt(data.geo) if data.geo else ""
-        # print result
 
+        # print result
         del data
         return super(TwitterParser, self).parse(result, clock)
 
@@ -207,7 +224,7 @@ class LocationBasedTwitterWrapper(AbstractWrapper):
         self.sensorDescription.field.timestamp.format = "UNIX5"
 
         self.sensorDescription.timestamp.inField = "timestamp"
-        self.sensorDescription.timestamp.format = "UNIX5"
+        self.sensorDescription.timestamp.format = "%Y-%m-%d %H:%M:%S" #"UNIX5"
         
         self.connection = TwitterConnection(self, ",".join(map(str, coordinates)))
         self.parser = TwitterParser(self, tablename)

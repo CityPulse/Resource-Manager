@@ -12,7 +12,7 @@ from virtualisation.misc.buffer import NumericRingBuffer
 from virtualisation.misc.jsonobject import JSONObject
 
 
-PATH = "./graphs/"
+PATH = "./"
 BUFFER_SIZE = 1000
 
 class Element(object):
@@ -105,7 +105,11 @@ class TimeElementList(TimeElement):
     def stop(self, stoptime):
         super(TimeElementList, self).stop(stoptime)
         [e.stop(stoptime) for e in self.timeElementMap.values() if e.started(True)]
-        [e.insertNotUsedValue(self.buffer.len()) for e in self.timeElementMap.values()]
+        self.insertNotUsedValue(self.buffer.len())
+        
+    def insertNotUsedValue(self, values=0):
+        super(TimeElementList, self).insertNotUsedValue(values)
+        [e.insertNotUsedValue(values) for e in self.timeElementMap.values()]
         
     def finish(self):
         super(TimeElementList, self).finish()
@@ -117,17 +121,17 @@ class TimeElementList(TimeElement):
 #         tuples = []
 #         for e in data:
 #             self.parse(e, tuples)
-#         
+#          
 #         csvfile = open(PATH + str(name) + "_" + str(self.name) + ".csv", 'w')
 #         csvf = csv.writer(csvfile, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-#         
+#          
 #         header = []
 #         maxEntries = 0
 #         for e in tuples:
 #             header.append(e[0])
 #             maxEntries = max(maxEntries, e[1].len())
 #         csvf.writerow(header)
-#         
+#          
 #         for i in range(0, maxEntries):
 #             row = []
 #             for e in tuples:
@@ -330,22 +334,21 @@ class Stats(object):
 #     s = Stats("test")
 #     for i in range(0, 10):
 #         s.startMeasurement("method")
-#         s.count("testCounter")
 # #         print i
-# #         if i is 0:
-#         s.startMeasurement("method.if")
-#         sleep(0.0005)
-#         s.startMeasurement("method.if.test")
-#         sleep(0.0005)
-#         s.stopMeasurement("method.if.test")   
-#         s.stopMeasurement("method.if")   
-# 
-# #         else:
-#         s.startMeasurement("method.else")
-#         sleep(0.0005)
-#         s.stopMeasurement("method.else")       
+#         if i is 0:
+#             s.startMeasurement("method.if")
+#             sleep(0.0005)
+#             s.startMeasurement("method.if.test")
+#             sleep(0.0005)
+#             s.stopMeasurement("method.if.test")   
+#             s.stopMeasurement("method.if")   
+#  
+#         else:
+#             s.startMeasurement("method.else")
+#             sleep(0.0005)
+#             s.stopMeasurement("method.else")       
 #         s.stopMeasurement("method")   
 #     print s.getAverageProcessingTimes()[0].dumps()
 #     print "#####" 
-# 
+#  
 #     s.writeCSVFiles()

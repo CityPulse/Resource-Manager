@@ -1,5 +1,7 @@
 import abc
 from virtualisation.aggregation.sax.saxcontrol import SaxControl
+from virtualisation.aggregation.dft.dftcontrol import DftControl
+from virtualisation.aggregation.paa.paacontrol import PaaControl
 from virtualisation.aggregation.sensorsax.sensorsaxcontrol import SensorSaxControl
 from virtualisation.misc.jsonobject import JSONObject
 from virtualisation.misc.log import Log
@@ -8,7 +10,7 @@ __author__ = ['Marten Fischer (m.fischer@hs-osnabrueck.de)', 'Daniel Puschmann']
 
 
 class AggregatorControlFactory(object):
-    entries = {"sax": SaxControl, 'sensorsax': SensorSaxControl}
+    entries = {"sax": SaxControl, 'sensorsax': SensorSaxControl, 'dft': DftControl, 'paa': PaaControl}
 
     @classmethod
     def make(cls, aggregator, aggregationconfiguration):

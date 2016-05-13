@@ -20,9 +20,8 @@ class SQL(object):
         self.curs = self.conn.cursor()
         try:
             self.curs.execute("CREATE SCHEMA IF NOT EXISTS %s;" % SQL.SCHEMA)
-            # self.curs.execute("CREATE TABLE IF NOT EXISTS %s.cp_sensors (sensor_uuid UUID CONSTRAINT uuid_key PRIMARY KEY, sensor_annotation_id VARCHAR, sercvice_category VARCHAR, traffic INTEGER, geom GEOMETRY(GEOMETRY(4326)) );" % (SQL.SCHEMA,))
-            self.curs.execute("CREATE TABLE IF NOT EXISTS %s.cp_sensors (sensor_uuid UUID CONSTRAINT uuid_key PRIMARY KEY, sensor_annotation_id VARCHAR, sercvice_category VARCHAR, traffic INTEGER, geom GEOMETRY(GEOMETRY(4326)) );" % ("public",))
-
+            # self.curs.execute("CREATE TABLE IF NOT EXISTS %s.cp_sensors (sensor_uuid UUID CONSTRAINT uuid_key PRIMARY KEY, sensor_annotation_id VARCHAR, sercvice_category VARCHAR, traffic INTEGER, geom GEOMETRY(GEOMETRY, 4326) );" % (SQL.SCHEMA,))
+            self.curs.execute("CREATE TABLE IF NOT EXISTS %s.cp_sensors (sensor_uuid UUID CONSTRAINT uuid_key PRIMARY KEY, sensor_annotation_id VARCHAR, sercvice_category VARCHAR, traffic INTEGER, geom GEOMETRY(GEOMETRY, 4326) );" % ("public",))
             cols = ["sampling_time TIMESTAMP", "sensor_uuid UUID", "observation_uuid UUID", "data JSON", "quality JSON"]
             query = 'CREATE TABLE IF NOT EXISTS %s.cp_observations ( %s, PRIMARY KEY (%s), FOREIGN KEY (sensor_uuid) REFERENCES %s.cp_sensors(sensor_uuid));\n' % (SQL.SCHEMA, ', '.join(cols),  ", ".join(["observation_uuid"]), "public")
             self.curs.execute(query)
@@ -31,9 +30,9 @@ class SQL(object):
             # since a 'IF NOT EXISTS' is not available for us (version < 9.5)
             # the error is catched in a separate try-catch
             try:
-                query = 'CREATE INDEX "timeindex" ON observations.cp_observations USING btree (sampling_time);'
+                query = 'CREATE INDEX "timeindex" ON %s.cp_observations USING btree (sampling_time);' % (SQL.SCHEMA,)
                 self.curs.execute(query)
-                query = 'CREATE INDEX uuidindex ON observations.cp_observations USING btree (sensor_uuid);'
+                query = 'CREATE INDEX uuidindex ON %s.cp_observations USING btree (sensor_uuid);' % (SQL.SCHEMA,)
                 self.curs.execute(query)
             except:
                 pass
@@ -198,13 +197,15 @@ class SQL(object):
         :param uuid:
         :return:
         """
-        query = "SELECT min(sampling_time), max(sampling_time) FROM %s.cp_observation WHERE sensor_uuid = '%s';" % (SQL.SCHEMA, uuid)
+        query = "SELECT min(sampling_time), max(sampling_time) FROM %s.cp_observations WHERE sensor_uuid = '%s';" % (SQL.SCHEMA, uuid)
         # need a new cursor object to no interfere with the state of the class's inserting cursor
         cursor = self.conn.cursor()
         cursor.execute(query)
         data = cursor.fetchall()
         if len(data) == 1:
-            return data[0]
+            d1, d2 = data[0]
+            return d1.strftime("%Y-%m-%dT%H:%M:%S%z"), d2.strftime("%Y-%m-%dT%H:%M:%S%z")
+
         else:
             return None, None
 
@@ -216,3 +217,14 @@ class SQL(object):
         for sensor_uuid, in data:
             yield self.get_observations(sensor_uuid, start, end, format='nt')
         return
+
+# if __name__ == "__main__":
+#     cnf = JOb({
+#     "host": "localhost",
+#     "port": 5438,
+#     "username": "wp4",
+#     "password": "wp4natss!",
+#     "database": "cp_sweden"
+#   })
+#     sql = SQL(cnf, None)
+#     print "ok"

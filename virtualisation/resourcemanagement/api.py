@@ -529,3 +529,9 @@ class Api(object):
                 qualities.append(resp)
         return JOb(qualities).dumps()
 
+    @cherrypy.expose
+    def get_replay_time(self):
+        if self.rm.clock:
+            return self.rm.clock.timeAsString()
+        else:
+            return "0"
