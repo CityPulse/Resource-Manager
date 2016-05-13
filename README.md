@@ -123,7 +123,7 @@ The Resource management is started via command line terminal. There are a series
 
 Link
 ----
-TODO
+The code of the Resource Management can be found here: <https://github.com/CityPulse/CP_Resourcemanagement>
 
 
 
