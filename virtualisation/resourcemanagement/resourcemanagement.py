@@ -31,9 +31,6 @@ from Quality.Average.averageStreamQuality import AverageStreamQuality
 from virtualisation.misc.utils import dictdeepcopy
 from virtualisation.misc.stat_api import Stat_Api
 
-
-# import moved to constructor in case the -gdi parameter is set
-# from CityPulseGdi.eu.citypulse.uaso.gdi.CityPulseGDInterface import CityPulseGDInterface
 __author__ = 'Marten Fischer (m.fischer@hs-osnabrueck.de)'
 
 class ResourceManagement(virtualisation.wrapper.wrapperoutputreceiver.AbstractReceiver):
@@ -44,7 +41,6 @@ class ResourceManagement(virtualisation.wrapper.wrapperoutputreceiver.AbstractRe
 
     def __init__(self, args):
         L(args.log)
-        self.annotation_file = open('parkingFebruaryOctober.ttl', 'ab')
         self.config = JOb(file(os.path.join(os.path.dirname(__file__), "..", "config.json"), "rb"))
         self.wrappers = []
         ResourceManagement.args = args
@@ -183,7 +179,6 @@ class ResourceManagement(virtualisation.wrapper.wrapperoutputreceiver.AbstractRe
         threading.Thread(target=cherrypy.quickstart, args=(self.ui, '/', self.config.interface.raw())).start()
 
     def stopInterface(self):
-#         pass
         cherrypy.engine.exit()
 
     def test(self):
@@ -196,19 +191,18 @@ class ResourceManagement(virtualisation.wrapper.wrapperoutputreceiver.AbstractRe
         from wrapper_dev.aarhus_traffic.aarhustrafficwrapper import AarhusTrafficWrapper
         wrapper = AarhusTrafficWrapper()
         self.addWrapper(wrapper)
-
-        from wrapper_dev.aarhus_parking.aarhusparkingwrapper import AarhusParkingWrapper
-        wrapper = AarhusParkingWrapper()
-        self.addWrapper(wrapper)
-        from wrapper_dev.brasov_pollution.brasovpollutionwrapper import BrasovPollutionWrapper
-        wrapper = BrasovPollutionWrapper()
-        self.addWrapper(wrapper)
-        from wrapper_dev.romania_weather.romaniaweather_aw import RomanianWeatherAWWrapper
-        wrapper = RomanianWeatherAWWrapper()
-        self.addWrapper(wrapper)
-        from wrapper_dev.romania_weather.romaniaweather_mr import RomanianWeatherMRWrapper
-        wrapper = RomanianWeatherMRWrapper()
-        self.addWrapper(wrapper)
+        # from wrapper_dev.aarhus_parking.aarhusparkingwrapper import AarhusParkingWrapper
+        # wrapper = AarhusParkingWrapper()
+        # self.addWrapper(wrapper)
+        # from wrapper_dev.brasov_pollution.brasovpollutionwrapper import BrasovPollutionWrapper
+        # wrapper = BrasovPollutionWrapper()
+        # self.addWrapper(wrapper)
+        # from wrapper_dev.romania_weather.romaniaweather_aw import RomanianWeatherAWWrapper
+        # wrapper = RomanianWeatherAWWrapper()
+        # self.addWrapper(wrapper)
+        # from wrapper_dev.romania_weather.romaniaweather_mr import RomanianWeatherMRWrapper
+        # wrapper = RomanianWeatherMRWrapper()
+        # self.addWrapper(wrapper)
 #         from wrapper_dev.brasov_incidents.brasov_incidents import BrasovIncidentWrapper0, BrasovIncidentWrapper1
 #         wrapper = BrasovIncidentWrapper0()
 #         self.addWrapper(wrapper)
@@ -398,7 +392,7 @@ class ResourceManagement(virtualisation.wrapper.wrapperoutputreceiver.AbstractRe
         self.startMonitor()
 
         if not ResourceManagement.args.continuelive:
-            raw_input("press Enter to end.\n")  
+            raw_input("press Enter to end.\n")
             self.clock.stop()
             L.i("Runtime", datetime.datetime.now() - start_time)
 
@@ -457,6 +451,7 @@ class ResourceManagement(virtualisation.wrapper.wrapperoutputreceiver.AbstractRe
         if ResourceManagement.args.triplestore:
             ThreadedTriplestoreAdapter.stop()
         self.stopInterface()
+        L.i("REPLAY ENDED")
 
     # def registerExchanges(self):
     #     try:
@@ -516,25 +511,6 @@ class ResourceManagement(virtualisation.wrapper.wrapperoutputreceiver.AbstractRe
         if ResourceManagement.args.messagebus or ResourceManagement.args.triplestore:
             # if len(parsedData.fields)>0:
             g = self.annotator.annotateObservation(parsedData, sensordescription, clock, quality)
-                # print "Writing graph to file"
-                # graph_string = g.serialize(format='n3')
-                # delete_string = "@prefix ces: <http://www.insight-centre.org/ces#> .\n" \
-                #                 "@prefix ct: <http://ict-citypulse.eu/city#> .\n" \
-                #                 "@prefix geo: <http://www.w3.org/2003/01/geo/wgs84_pos#> .\n" \
-                #                 "@prefix muo: <http://purl.oclc.org/NET/muo/muo#> .\n" \
-                #                 "@prefix owlss: <http://www.daml.org/services/owl-s/1.2/Service.owl#> .\n" \
-                #                 "@prefix prov: <http://www.w3.org/ns/prov#> .\n" \
-                #                 "@prefix qoi: <http://purl.oclc.org/NET/UASO/qoi#> .\n" \
-                #                 "@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .\n" \
-                #                 "@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .\n" \
-                #                 "@prefix sao: <http://purl.oclc.org/NET/UNIS/sao/sao#> .\n" \
-                #                 "@prefix ssn: <http://purl.oclc.org/NET/ssnx/ssn#> .\n" \
-                #                 "@prefix tl: <http://purl.org/NET/c4dm/timeline.owl#> .\n" \
-                #                 "@prefix xml: <http://www.w3.org/XML/1998/namespace> .\n" \
-                #                 "@prefix xsd: <http://www.w3.org/2001/XMLSchema#> ."
-                # graph_string = graph_string[len(delete_string):]
-                # self.annotation_file.write(graph_string)
-                # self.annotation_file.write('\n')
 
         del quality
         if ResourceManagement.args.messagebus and not sensordescription.no_publish_messagebus and "fields" in parsedData and len(parsedData.fields) > 0:
@@ -546,10 +522,11 @@ class ResourceManagement(virtualisation.wrapper.wrapperoutputreceiver.AbstractRe
             if self.ui.api:
                 self.ui.api.update_observation_cache(str(sensordescription.uuid), message)
         if ResourceManagement.args.triplestore:
-            ThreadedTriplestoreAdapter.getOrMake(sensordescription.graphName).addGraph(g)
+            # TODO: The following line is commented out, since the Virtuoso makes so much trouble
+            # ThreadedTriplestoreAdapter.getOrMake(sensordescription.graphName).addGraph(g)
+            pass
         if ResourceManagement.args.messagebus or ResourceManagement.args.triplestore:
             del g
-            # pass
         if ResourceManagement.args.aggregate:
             self.aggregationQueue.add((parsedData, sensordescription))
         else:

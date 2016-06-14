@@ -1,7 +1,7 @@
 CP_Resourcemanagement
 =====================
 
-The Resource Management componentis responsible for managing all Data Wrappers. During runtime an application developer or the CityPulse framework operator can deploy new Data Wrappers to include data from new data streams. The folder "wrapper_dev" contains examplary Data Wrappers for traffic and parking data of the city of Aarhus, Denmark as well as weather, air quality and incidents of the city of Brasov, Romania. 
+The Resource Management component is responsible for managing all Data Wrappers. During runtime an application developer or the CityPulse framework operator can deploy new Data Wrappers to include data from new data streams. The folder "wrapper_dev" contains examplary Data Wrappers for traffic and parking data of the city of Aarhus, Denmark as well as weather, air quality and incidents of the city of Brasov, Romania. 
 The Resource Management component can be used for the following types of scenarios:
 * Fetch live stream data via one or more Data wrappers
 * Replay historic data embedded in a Data wrapper
@@ -114,18 +114,22 @@ The Resource management is started via command line terminal. There are a series
 <tr><td>triplestore</td><td>Enable the triplestore feature.</td></tr>
 <tr><td>aggregate</td><td>Use the aggregation method, as specified in the SensorDescription, to aggregate new observations.</td></tr>
 <tr><td>speed SPEED</td><td>In replay mode determines the speed of the artificial clock. The value range is [0-1000]. An artificial second within the replay will take 1000 – SPEED milliseconds.</td></tr>
-<tr><td>gdi</td><td>Geospatioal Database Injection. Newly registered Data wrappers are reported to the Geospatioal Database.</td></tr>
+<tr><td>gdi</td><td>Geospatioal Database Interface. Newly registered Data wrappers are reported to the Geospatioal Database.</td></tr>
 <tr><td>gentle</td><td>Reduces the CPU load in replay mode, but slower.</td></tr>
 <tr><td>cleartriplestore</td><td>Deletes all graphs in the triplestore (may take up to 300s per wrapper!)</td></tr>
 <tr><td>restart</td><td>Restarts the Resource Management with the same arguments as last time.</td></tr>
 <tr><td>eventannotation</td><td>The Resource Management will listen on the message bus for new events to semantically annotate them and store them into the triplestore. Last feature requires the triplestore argument.</td></tr>
 </table>
 
-Link
-----
+Links
+-----
 The code of the Resource Management can be found here: <https://github.com/CityPulse/CP_Resourcemanagement>
 
+More details for this component can be found in the CityPulse Deliverable 5.3 "Real-Time IoT Stream Processing and Large-scale Data Analytics for Smart City Applications", April 2016,  <http://www.ict-citypulse.eu/page/sites/default/files/d5.3_smart_city_environment_user_interfaces.pdf>
 
+Contributers
+------------
+The Resource Management was developed as part of the EU project CityPulse. The consortium members University of Surrey and University of Applied Sciences provided the main contributions for this component.
 
 License of historical data
 --------------------------

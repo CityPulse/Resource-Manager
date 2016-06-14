@@ -36,7 +36,7 @@ class CSVParser(AbstractParser):
             return None
 
         if self.lenNames > len(data):
-            raise Exception()
+            raise Exception("CSVParser: not enough data fields")
 
         result = JOb()
         sd = self.wrapper.getSensorDescription()

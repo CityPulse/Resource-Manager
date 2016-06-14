@@ -159,16 +159,17 @@ class AbstractWrapper(object):
                 self.stats.startMeasurement("Update_replay.Historyreader")
                 data_raw = self.historyreader.tick(self.clock)
                 self.stats.stopMeasurement("Update_replay.Historyreader")
-                L.d2("abstractwrapper received data:", data_raw)
+                L.d2("abstractwrapper received data:", str(data_raw))
                 if data_raw:
                     data_list = [data_raw] if not self.historyreader.multiple_observations else data_raw
                     for data in data_list:
                         try:
                             L.d2("abstractwrapper parse data")
+                            #print "data to parse", data
                             self.stats.startMeasurement("Update_replay.Historyparser")
                             parsed = self.historyparser.parse(data, self.clock)
                             self.stats.stopMeasurement("Update_replay.Historyparser")
-                            L.d2("abstractwrapper parsed data:", parsed)
+                            L.d2("abstractwrapper parsed data:", str(parsed))
                             del data
                             if parsed:
                                 self.stats.startMeasurement("Update_replay.Preparation")

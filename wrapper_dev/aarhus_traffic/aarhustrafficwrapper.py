@@ -80,7 +80,8 @@ class InternalWrapper(AbstractWrapper):
         if mode:
             try:
                 Log.i("loading history for", self.sensorDescription.sensorID, "...")
-                self.historyreader =  CSVHistoryReader(self, AbstractWrapper.getFileObject(__file__, os.path.join("historicdata", "trafficData%d.csv" % self.sensorDescription.sensorID), "rU"))
+                self.historyreader = CSVHistoryReader(self, AbstractWrapper.getFileObject(__file__, os.path.join("historicdata", "trafficData%d.csv" % self.sensorDescription.sensorID), "rU"))
+                self.historyreader.multiple_observations = False
                 Log.i("done")
                 self.historyparser = CSVParser(self, self.historyreader.headers)
                 # connection will be set automatically by the AbstractComposedWrapper to SplitterConnection
