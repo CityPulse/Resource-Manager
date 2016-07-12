@@ -69,7 +69,7 @@ class TwitterConnection(HttpPullConnection):
 
         # list of terms to track
         tracks = ['#Aarhus']
-
+        print "TAA ready."
         try:
             r = api.request('statuses/filter', {'locations': self.location, 'follow': ','.join(users), 'track': ','.join(tracks)})
         except:
@@ -115,7 +115,7 @@ class TwitterParser(JSONParser):
             elif err.errno == errorcode.ER_BAD_DB_ERROR:
                 print("Database does not exist")
             else:
-                print err
+                print "MySQL Connector error:", err
 
         self.tablename = tablename
         self.insert_stmt = "INSERT INTO " + self.tablename + " (twitterid, userid, text, time, lat, `long`, boundingbox) VALUES (%(tweet_id)s, %(user_id)s, %(text)s, %(timestamp)s, %(lat)s, %(long)s, %(bounding_box)s)"
@@ -123,14 +123,17 @@ class TwitterParser(JSONParser):
     def parse(self, data, clock):
         if not data:  # nothing received or nothing in the history -> nothing to parse
             return None
-
         data = JOb(data)
         result = JOb()
         result.text = data.text
         result.user_id = data.user.id
         result.timestamp = datetime.datetime.fromtimestamp(int(data.timestamp_ms)/1000).strftime('%Y-%m-%d %H:%M:%S') #data.timestamp_ms
         result.tweet_id = data.id
-        result.bounding_box = "[" + ";".join([",".join(map(str, a)) for a in data.place.bounding_box.coordinates[0]]) + "]"
+        if 'place' in data and data.place is not None:
+            result.bounding_box = "[" + ";".join([",".join(map(str, a)) for a in data.place.bounding_box.coordinates[0]]) + "]"
+        else:
+            result.bounding_box = "[]"
+            # print "no bounding box!"
 
         result.lat = ""
         result.long = ""
@@ -144,7 +147,6 @@ class TwitterParser(JSONParser):
             self.db.commit()
 
         result.geotag = self.geometry_to_wkt(data.geo) if data.geo else ""
-
         # print result
         del data
         return super(TwitterParser, self).parse(result, clock)

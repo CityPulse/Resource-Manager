@@ -36,7 +36,7 @@ class InternalBrasovWrapper(AbstractWrapper):
     def setReplayMode(self, mode):
         if mode:
             try:
-                self.historyreader = CSVHistoryReader(self, AbstractWrapper.getFileObject(__file__, os.path.join("historicdata", "pollution-%s.csv" % self.sensorDescription.sensorID), "rb"), delimiter=';')
+                self.historyreader = CSVHistoryReader(self, AbstractWrapper.getFileObject(__file__, os.path.join("historicdata", "pollution-%s.csv" % self.sensorDescription.sensorID), "rU"), delimiter=';')
                 self.historyparser = CSVParser(self, self.historyreader.headers)
             except Exception as e:
                 Log.e(e)

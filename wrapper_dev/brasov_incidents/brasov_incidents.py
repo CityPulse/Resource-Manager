@@ -242,7 +242,8 @@ class BrasovIncidentWrapper(AbstractWrapper):
         fieldnames = ["id", "comments", "createdon", "description", "guid", "i", "incidentState", "incidentid", "indsoft_publiclyvisible", "statecode", "ticketnumber", "timestamp", "title", "x", "y"]
         try:
             fobj = AbstractWrapper.getFileObject(__file__, "incidents%d.csv" % self.number, "rU")
-            self.historyreader = CSVHistoryReader(self, fobj, delimiter=';')
+            self.historyreader = CSVHistoryReader(self, fobj, delimiter=',')
+            self.historyreader.multiple_observations = False
             self.historyparser = CSVParser(self, fieldnames)
 
         except Exception as e:

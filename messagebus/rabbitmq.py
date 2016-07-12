@@ -82,7 +82,7 @@ class RabbitMQ(object):
             for ex in RabbitMQ.exchanges:
                 RabbitMQ.declareExchange(ex, _type="topic")
         except Exception as e:
-            L.e('Exchange could not be declare: %s' % e.message)
+            L.e('Exchange could not be declared: %s' % e.message)
 
     @classmethod
     def deleteExchange(cls, exchange):
