@@ -247,7 +247,7 @@ class BrasovIncidentWrapper(AbstractWrapper):
             self.historyparser = CSVParser(self, fieldnames)
 
         except Exception as e:
-            Log.e(e)
+            Log.e("setReplayMode in Brasov Incident Wrapper", self.number, e)
             self.historyreader = None
 
 class BrasovIncidentWrapper0(BrasovIncidentWrapper):

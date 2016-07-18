@@ -11,7 +11,7 @@ import zipfile
 import cherrypy
 
 from messagebus.rabbitmq import RabbitMQ, MessageBusConnectionError
-from virtualisation.aggregation.genericaggregation import GenericAggregator
+#from virtualisation.aggregation.genericaggregation import GenericAggregator
 from virtualisation.annotation.genericannotation import GenericAnnotation
 from virtualisation.annotation.staticannotation import StaticAnnotator
 from virtualisation.clock.realclock import RealClock
@@ -58,7 +58,9 @@ class ResourceManagement(virtualisation.wrapper.wrapperoutputreceiver.AbstractRe
         if args.aggregate:
             # self.aggregator = AggregatorFactory.make(self.config.aggregationmethod, self.config.aggregation_configuration)
             # self.aggregator = AggregatorFactory.make()
-            self.aggregator = GenericAggregator()
+
+            #TODO
+            #self.aggregator = GenericAggregator()
             self.aggregationQueue = QueueThread(handler=self.aggregateHandler)
         self.receiverQueue = QueueThread(handler=self.receiveHandler)
 
@@ -66,9 +68,24 @@ class ResourceManagement(virtualisation.wrapper.wrapperoutputreceiver.AbstractRe
         if args.messagebus:
             self.messageBusQueue = QueueThread(handler=self.sendMessageHandler)
             try:
-                #self.rabbitmqconnection, self.messageBusQueue.rabbitmqchannel = \
-                RabbitMQ.establishConnection(str(self.config.rabbitmq.host), self.config.rabbitmq.port)
+
+                # prepare RabbitMQ configuration
+                rmq_host = str(self.config.rabbitmq.host)
+                rmq_port = self.config.rabbitmq.port
+                rmq_username = self.config.rabbitmq.username if "username" in self.config.rabbitmq else None
+                rmq_password = self.config.rabbitmq.username if "password" in self.config.rabbitmq else None
+                if rmq_username:
+                    if rmq_password:
+                        RabbitMQ.establishConnection(rmq_host, rmq_port, rmq_username, rmq_password)
+                    else:
+                        RabbitMQ.establishConnection(rmq_host, rmq_port, rmq_username)
+                else:
+                    RabbitMQ.establishConnection(rmq_host, rmq_port)
+
+                ##self.rabbitmqconnection, self.messageBusQueue.rabbitmqchannel = \
+                #RabbitMQ.establishConnection(str(self.config.rabbitmq.host), self.config.rabbitmq.port)
                 #self.registerExchanges()
+
                 self.messageBusQueue.start()
             except MessageBusConnectionError:
                 self.args.messagebus = False
@@ -188,12 +205,12 @@ class ResourceManagement(virtualisation.wrapper.wrapperoutputreceiver.AbstractRe
         # from wrapper_dev.london_traffic.londontrafficwrapper import LondonTrafficWrapper
         # wrapper = LondonTrafficWrapper()
         # self.addWrapper(wrapper)
-        from wrapper_dev.aarhus_traffic.aarhustrafficwrapper import AarhusTrafficWrapper
-        wrapper = AarhusTrafficWrapper()
-        self.addWrapper(wrapper)
-        # from wrapper_dev.aarhus_parking.aarhusparkingwrapper import AarhusParkingWrapper
-        # wrapper = AarhusParkingWrapper()
+        # from wrapper_dev.aarhus_traffic.aarhustrafficwrapper import AarhusTrafficWrapper
+        # wrapper = AarhusTrafficWrapper()
         # self.addWrapper(wrapper)
+        from wrapper_dev.aarhus_parking.aarhusparkingwrapper import AarhusParkingWrapper
+        wrapper = AarhusParkingWrapper()
+        self.addWrapper(wrapper)
         # from wrapper_dev.brasov_pollution.brasovpollutionwrapper import BrasovPollutionWrapper
         # wrapper = BrasovPollutionWrapper()
         # self.addWrapper(wrapper)
@@ -203,11 +220,11 @@ class ResourceManagement(virtualisation.wrapper.wrapperoutputreceiver.AbstractRe
         # from wrapper_dev.romania_weather.romaniaweather_mr import RomanianWeatherMRWrapper
         # wrapper = RomanianWeatherMRWrapper()
         # self.addWrapper(wrapper)
-#         from wrapper_dev.brasov_incidents.brasov_incidents import BrasovIncidentWrapper0, BrasovIncidentWrapper1
-#         wrapper = BrasovIncidentWrapper0()
-#         self.addWrapper(wrapper)
-#         wrapper = BrasovIncidentWrapper1()
-#         self.addWrapper(wrapper)
+        # from wrapper_dev.brasov_incidents.brasov_incidents import BrasovIncidentWrapper0, BrasovIncidentWrapper1
+        # wrapper = BrasovIncidentWrapper0()
+        # self.addWrapper(wrapper)
+        # wrapper = BrasovIncidentWrapper1()
+        # self.addWrapper(wrapper)
 #         from wrapper_dev.aarhus_pollution.aarhuspollutionwrapper import ComposedAarhusPollutionWrapper
 #         wrapper = ComposedAarhusPollutionWrapper()
 #         self.addWrapper(wrapper)
@@ -467,14 +484,16 @@ class ResourceManagement(virtualisation.wrapper.wrapperoutputreceiver.AbstractRe
         del message
 
     def aggregateHandler(self, item):
-        data, sensordescription = item
-        aggs = self.aggregator.aggregate(data, sensordescription)
-        if ResourceManagement.args.messagebus and aggs:
-            for agg in aggs:
-                annotated_agg = self.annotator.annotateAggregation(agg, sensordescription)
-                msg = annotated_agg.serialize(format='n3')
-                self.messageBusQueue.add((msg, RabbitMQ.exchange_aggregated_data, sensordescription.messagebus.routingKey))
-            del aggs
+        #TODO
+        # data, sensordescription = item
+        # aggs = self.aggregator.aggregate(data, sensordescription)
+        # if ResourceManagement.args.messagebus and aggs:
+        #     for agg in aggs:
+        #         annotated_agg = self.annotator.annotateAggregation(agg, sensordescription)
+        #         msg = annotated_agg.serialize(format='n3')
+        #         self.messageBusQueue.add((msg, RabbitMQ.exchange_aggregated_data, sensordescription.messagebus.routingKey))
+        #     del aggs
+        pass
 
     def receive(self, parsedData, sensordescription, clock, quality):
         # L.i("Received data from", sensordescription.fullSensorID)
@@ -523,7 +542,7 @@ class ResourceManagement(virtualisation.wrapper.wrapperoutputreceiver.AbstractRe
                 self.ui.api.update_observation_cache(str(sensordescription.uuid), message)
         if ResourceManagement.args.triplestore:
             # TODO: The following line is commented out, since the Virtuoso makes so much trouble
-            # ThreadedTriplestoreAdapter.getOrMake(sensordescription.graphName).addGraph(g)
+            ThreadedTriplestoreAdapter.getOrMake(sensordescription.graphName).addGraph(g)
             pass
         if ResourceManagement.args.messagebus or ResourceManagement.args.triplestore:
             del g

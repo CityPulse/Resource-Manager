@@ -68,7 +68,7 @@ class RabbitMQ(object):
                     print "Failed to reconnect to RabbitMQ"
 
     @classmethod
-    def declareExchange(cls, exchange, _type='direct'):
+    def declareExchange(cls, exchange, _type='topic'):
         # Checks if exchange exists and declares the exchange in case it has not been declared before
         if exchange not in RabbitMQ.exchangetopics:
             RabbitMQ.channel.exchange_declare(exchange=exchange, exchange_type=_type, auto_delete=False, nowait=False)
@@ -78,11 +78,12 @@ class RabbitMQ(object):
 
     @classmethod
     def registerExchanges(cls):
-        try:
-            for ex in RabbitMQ.exchanges:
+        for ex in RabbitMQ.exchanges:
+            try:
                 RabbitMQ.declareExchange(ex, _type="topic")
-        except Exception as e:
-            L.e('Exchange could not be declared: %s' % e.message)
+            except Exception as e:
+                L.e('Exchange %s could not be declared: %s' % (ex, e.message))
+                L.e('Exception:', str(e))
 
     @classmethod
     def deleteExchange(cls, exchange):

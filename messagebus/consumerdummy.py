@@ -14,14 +14,26 @@ class ConsumerDummy(object):
 
     def __init__(self, exchange, key):
         self.config = JOb(file(os.path.join(os.path.dirname(__file__), "..", "virtualisation", "config.json"), "rb"))
-        self.host = self.config.rabbitmq.host
-        self.port = self.config.rabbitmq.port
-        print "start listening on", self.host, "with port", self.port
-        print "waiting for", key, "on exchange", exchange
+        # self.host = self.config.rabbitmq.host
+        # self.port = self.config.rabbitmq.port
 
         self.exchange = exchange
         self.routing_key = key
-        print ("Connection established" if RabbitMQ.establishConnection(self.host, self.port) else "Failed to connect")
+        rmq_host = str(self.config.rabbitmq.host)
+        rmq_port = self.config.rabbitmq.port
+        rmq_username = self.config.rabbitmq.username if "username" in self.config.rabbitmq else None
+        rmq_password = self.config.rabbitmq.username if "password" in self.config.rabbitmq else None
+
+        print "start listening on", rmq_host, "with port", rmq_port
+        print "waiting for", key, "on exchange", exchange
+
+        if rmq_username:
+            if rmq_password:
+                print ("Connection established" if RabbitMQ.establishConnection(rmq_host, rmq_port, rmq_username, rmq_password) else "Failed to connect")
+            else:
+                print ("Connection established" if RabbitMQ.establishConnection(rmq_host, rmq_port, rmq_username) else "Failed to connect")
+        else:
+            print ("Connection established" if RabbitMQ.establishConnection(rmq_host, rmq_port) else "Failed to connect")
 
     def start(self):
         # RabbitMQ.declareExchange(self.channel, self.exchange, _type="topic")
@@ -45,11 +57,11 @@ if __name__ == '__main__':
     # consumer = consumerDummy('annotated_data', 'Aarhus.Road.Parking.#')
     # consumer = consumerDummy('annotated_data', 'Aarhus.Road.Traffic.#')
     # consumer = consumerDummy('annotated_data', 'Aarhus.Road.Traffic.158324')
-    consumer = consumerDummy('aggregated_data', '#')
+    # consumer = consumerDummy('aggregated_data', '#')
     # consumer = consumerDummy('quality', 'Aarhus.Road.Traffic.#')
     # consumer = consumerDummy('annotated_data', 'Brasov.Air.Pollution.#')
     # consumer = consumerDummy('annotated_data', 'Romania.Weather.#')
-    # consumer = ConsumerDummy('annotated_data', '#')
+    consumer = ConsumerDummy('annotated_data', '#')
     # consumer = consumerDummy('wrapper_registration', '#')
-    # consumer = consumerDummy('events', '#')
+    # consumer = ConsumerDummy('events', '#')
     consumer.start()
