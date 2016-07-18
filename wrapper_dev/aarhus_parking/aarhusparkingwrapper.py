@@ -14,9 +14,7 @@ from virtualisation.wrapper.connection.httpconnection import HttpPullConnection
 from virtualisation.wrapper.splitter.abstractsplitter import AbstractSplitter
 
 import os.path
-import uuid
 import csv
-import xml.etree.ElementTree as ET
 
 def nicename(x):
     return x.replace(" ", "_").replace("+", "_")
@@ -42,7 +40,6 @@ class AarhusParkingSplitterJson(AbstractSplitter):
                 self.data[_gc] = {}
                 for x in r.raw():
                     self.data[_gc][x] = _r[x]
-            print "data", self.data
         else:
             self.data = None
 
