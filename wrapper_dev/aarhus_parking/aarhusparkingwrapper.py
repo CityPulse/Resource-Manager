@@ -21,9 +21,9 @@ import xml.etree.ElementTree as ET
 def nicename(x):
     return x.replace(" ", "_").replace("+", "_")
 
-class AarhusParkingSplitter(AbstractSplitter):
+class AarhusParkingSplitterJson(AbstractSplitter):
     def __init__(self, wrapper):
-        super(AarhusParkingSplitter, self).__init__(wrapper)
+        super(AarhusParkingSplitterJson, self).__init__(wrapper)
         self.data = None
 
     def next(self, sensorDescription):
@@ -35,13 +35,14 @@ class AarhusParkingSplitter(AbstractSplitter):
     def update(self, data):
         if data:
             self.data = {}
-            root = ET.fromstring(data)
-            for child in root:
-                if child.tag == "garage":
-                    gc = nicename(child.attrib["garageCode"])
-                    self.data[gc] = JOb()
-                    for a in child.attrib:
-                        self.data[gc][a] = child.attrib[a]
+            tmp = JOb(data)
+            for r in tmp.result.records:
+                _gc = nicename(r.garageCode)
+                _r = r.raw()
+                self.data[_gc] = {}
+                for x in r.raw():
+                    self.data[_gc][x] = _r[x]
+            print "data", self.data
         else:
             self.data = None
 
@@ -79,7 +80,7 @@ class AarhusParkingWrapper(AbstractComposedWrapper):
         metadatafile = AbstractComposedWrapper.getFileObject(__file__, "aarhus_parking-address.csv", "rU")
 
         basesensordescription = SensorDescription()
-        basesensordescription.source = "http://pgsaar.dyndns.org:4000/consumer/webServices/getGarageData.aspx"
+        basesensordescription.source = "http://www.odaa.dk/api/action/datastore_search?resource_id=2a82a145-0195-4081-a13c-b0e587e9b89c"
         basesensordescription.namespace = "http://ict-citypulse.eu/"
         basesensordescription.author = "cityofaarhus"
         basesensordescription.sensorType = "Aarhus_Road_Parking"
@@ -147,7 +148,7 @@ class AarhusParkingWrapper(AbstractComposedWrapper):
             self.addWrapper(InternalWrapper(sensordescription))
 
         self.connection = HttpPullConnection(self, basesensordescription.source)
-        self.splitter = AarhusParkingSplitter(self)
+        self.splitter = AarhusParkingSplitterJson(self)
         # self.update()
 
     def __getattr(self, o, n, d):
