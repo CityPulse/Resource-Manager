@@ -9,9 +9,19 @@ The Resource Management component can be used for the following types of scenari
 
 Requirements
 ------------
+The following Ubuntu packages need to be installed in order to run the Resource management:
+
+* python-pip
+* libgeos++-dev
+* libgeos-3.4.2
+* python-dev
+* libpq-dev
+* git
+* zip
+
 The Resource management is implemented in the programming language Python. The following Python packages have to be installed before using the component. The packages are available either in the package repository of the Ubuntu operating system or can be installed using PIP.
 
-* Pika
+* Pika (version 0.9.x)
 * CherryPy
 * Psycopg2
 * NumPy
@@ -21,16 +31,6 @@ The Resource management is implemented in the programming language Python. The f
 * Requests (version > 2.8)
 * Requests-oauthlib
 * Chardet
-
-In addition, the following Ubuntu packages need to be installed in order to run the Resource management:
-
-* python-pip
-* libgeos++-dev
-* libgeos-3.4.2
-* python-dev
-* libpq-dev
-* git
-* zip
 
 Dependencies to other CityPulse components
 ------------------------------------------
