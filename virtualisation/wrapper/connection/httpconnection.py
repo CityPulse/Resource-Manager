@@ -25,5 +25,5 @@ class HttpPullConnection(abstractconnection.AbstractConnection):
             f.close()
             return r
         except:
-            Log.e(self.__class__.__name__, "erro in load")
+            Log.e(self.__class__.__name__, "error in load")
             return None

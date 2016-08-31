@@ -329,13 +329,13 @@ class AbstractWrapper(object):
                                 r.receive(data, self.getSensorDescription(), self.clock, quality)
                             self.stats.stopMeasurement("Update_live.Receiver")
                         except Exception as e:
-                            L.e("Error while updating sensor (fault recovery)", self.getSensorDescription().fullSensorID, e)
+                            L.e("Error while updating sensor (fault recovery)", self.getSensorDescription().fullSensorID, str(e))
                         finally:
                             pass
                             # if ResourceManagement.args.gentle:
                             #     self.clock.sleep()
                 except Exception as e:
-                        L.e("Error while updating sensor (not fault recovery)", self.getSensorDescription().fullSensorID, e)
+                    L.e("Error while updating sensor (not fault recovery)", self.getSensorDescription().fullSensorID, str(e))
             else:
                 pass # no live mode supported
             self.stats.stopMeasurement("Update_live")

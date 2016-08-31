@@ -12,3 +12,16 @@ class DummyConnection(AbstractConnection):
 
     def next(self):
         return None
+
+
+class StringConnection(AbstractConnection):
+    """
+    This class fakes a connection and returns always the same string, given in the constructor.
+    """
+
+    def __init__(self, wrapper, aString):
+        super(StringConnection, self).__init__(wrapper)
+        self.aString = aString
+
+    def next(self):
+        return self.aString

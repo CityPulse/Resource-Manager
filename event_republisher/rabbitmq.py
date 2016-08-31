@@ -1,20 +1,17 @@
 import pika
 import pika.exceptions
 import time
-from virtualisation.misc.log import Log as L
-__author__ = 'Daniel Puschmann'
-
 MessageBusConnectionError = pika.exceptions.AMQPConnectionError
 
 class RabbitMQ(object):
+    """
+    Modified version of the RabbitMQ class. This class/file is intented for the event-republish-service.
+    TODO: try to reuse the classical RabbitMQ class.
+    """
     exchangetopics = []
-    exchanges = ["annotated_data", "quality", "events", "annotated_event", "aggregated_data", "wrapper_registration"]
-    exchange_annotated_data = exchanges[0]
-    exchange_quality = exchanges[1]
-    exchange_event = exchanges[2]
-    exchange_annotated_event = exchanges[3]
-    exchange_aggregated_data = exchanges[4]
-    exchange_wrapper_registration = exchanges[5]
+    exchanges = ["repeatable_events", "events"]
+    exchange_repeatable_events = exchanges[0]
+    exchange_events = exchanges[1]
 
     reconnection_delay = 10
 
@@ -25,27 +22,6 @@ class RabbitMQ(object):
         RabbitMQ.connection_params_username = username
         RabbitMQ.connection_params_password = password
         return RabbitMQ.__connect()
-        #
-        # connection_attempts = 1
-        # retry_delay = 1  # in seconds
-        # socket_timeout = 5
-        # heartbeat_interval = 600
-        #
-        # if host == 'localhost' and port is not None:
-        #     connection = pika.BlockingConnection(pika.ConnectionParameters(host=host, port=port, heartbeat_interval=heartbeat_interval, connection_attempts=connection_attempts, retry_delay=retry_delay, socket_timeout=socket_timeout))
-        # elif host == 'localhost':
-        #     connection = pika.BlockingConnection(pika.ConnectionParameters(host=host, heartbeat_interval=heartbeat_interval, connection_attempts=connection_attempts, retry_delay=retry_delay, socket_timeout=socket_timeout))
-        # else:
-        #     credentials = pika.PlainCredentials(username, password)
-        #     connection = pika.BlockingConnection(
-        #         pika.ConnectionParameters(host=host, heartbeat_interval=heartbeat_interval, port=port, credentials=credentials, connection_attempts=connection_attempts, retry_delay=retry_delay, socket_timeout=socket_timeout))
-        # # connection.add_on_close_callback(RabbitMQ.__reconnectMessageBus)
-        # # connection.add_on_open_error_callback(RabbitMQ.__connectionOpenError)
-        # RabbitMQ.connection = connection
-        # channel = connection.channel()
-        #
-        #
-        # return connection, channel
 
     # use one exchange for each data set
     # use routing key to send to the right subscribers
@@ -82,8 +58,8 @@ class RabbitMQ(object):
             try:
                 RabbitMQ.declareExchange(ex, _type="topic")
             except Exception as e:
-                L.e('Exchange %s could not be declared: %s' % (ex, e.message))
-                L.e('Exception:', str(e))
+                print ('Exchange %s could not be declared: %s' % (ex, e.message))
+                print ('Exception:', str(e))
 
     @classmethod
     def deleteExchange(cls, exchange):

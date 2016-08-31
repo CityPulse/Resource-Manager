@@ -11,7 +11,7 @@ import zipfile
 import cherrypy
 
 from messagebus.rabbitmq import RabbitMQ, MessageBusConnectionError
-#from virtualisation.aggregation.genericaggregation import GenericAggregator
+from virtualisation.aggregation.genericaggregation import GenericAggregator
 from virtualisation.annotation.genericannotation import GenericAnnotation
 from virtualisation.annotation.staticannotation import StaticAnnotator
 from virtualisation.clock.realclock import RealClock
@@ -60,37 +60,13 @@ class ResourceManagement(virtualisation.wrapper.wrapperoutputreceiver.AbstractRe
             # self.aggregator = AggregatorFactory.make()
 
             #TODO
-            #self.aggregator = GenericAggregator()
+            self.aggregator = GenericAggregator()
             self.aggregationQueue = QueueThread(handler=self.aggregateHandler)
         self.receiverQueue = QueueThread(handler=self.receiveHandler)
 
         # establish connection to the message bus
         if args.messagebus:
-            self.messageBusQueue = QueueThread(handler=self.sendMessageHandler)
-            try:
-
-                # prepare RabbitMQ configuration
-                rmq_host = str(self.config.rabbitmq.host)
-                rmq_port = self.config.rabbitmq.port
-                rmq_username = self.config.rabbitmq.username if "username" in self.config.rabbitmq else None
-                rmq_password = self.config.rabbitmq.username if "password" in self.config.rabbitmq else None
-                if rmq_username:
-                    if rmq_password:
-                        RabbitMQ.establishConnection(rmq_host, rmq_port, rmq_username, rmq_password)
-                    else:
-                        RabbitMQ.establishConnection(rmq_host, rmq_port, rmq_username)
-                else:
-                    RabbitMQ.establishConnection(rmq_host, rmq_port)
-
-                ##self.rabbitmqconnection, self.messageBusQueue.rabbitmqchannel = \
-                #RabbitMQ.establishConnection(str(self.config.rabbitmq.host), self.config.rabbitmq.port)
-                #self.registerExchanges()
-
-                self.messageBusQueue.start()
-            except MessageBusConnectionError:
-                self.args.messagebus = False
-                args.messagebus = False
-                L.w("Could not connect to MessageBus server. Disabling MessageBus feature.")
+            threading.Thread(name="messageBusConnector", target=self.start_messagebus, args=(args,)).start()
         else:
             self.messageBusQueue = None
 
@@ -129,6 +105,30 @@ class ResourceManagement(virtualisation.wrapper.wrapperoutputreceiver.AbstractRe
         if self.eventWrapper:
             if not self.eventWrapper.isStarted():
                 self.eventWrapper.start()
+
+    def start_messagebus(self, args):
+        L.i("Connecting to the message bus")
+        self.messageBusQueue = QueueThread(handler=self.sendMessageHandler)
+        try:
+
+            # prepare RabbitMQ configuration
+            rmq_host = str(self.config.rabbitmq.host)
+            rmq_port = self.config.rabbitmq.port
+            rmq_username = self.config.rabbitmq.username if "username" in self.config.rabbitmq else None
+            rmq_password = self.config.rabbitmq.username if "password" in self.config.rabbitmq else None
+            if rmq_username:
+                if rmq_password:
+                    RabbitMQ.establishConnection(rmq_host, rmq_port, rmq_username, rmq_password)
+                else:
+                    RabbitMQ.establishConnection(rmq_host, rmq_port, rmq_username)
+            else:
+                RabbitMQ.establishConnection(rmq_host, rmq_port)
+            L.i("Connected to the message bus")
+            self.messageBusQueue.start()
+        except MessageBusConnectionError:
+            self.args.messagebus = False
+            args.messagebus = False
+            L.w("Could not connect to MessageBus server. Disabling MessageBus feature.")
 
     def __all_sensordescriptions(self):
         sds = []
@@ -208,9 +208,9 @@ class ResourceManagement(virtualisation.wrapper.wrapperoutputreceiver.AbstractRe
         # from wrapper_dev.aarhus_traffic.aarhustrafficwrapper import AarhusTrafficWrapper
         # wrapper = AarhusTrafficWrapper()
         # self.addWrapper(wrapper)
-        from wrapper_dev.aarhus_parking.aarhusparkingwrapper import AarhusParkingWrapper
-        wrapper = AarhusParkingWrapper()
-        self.addWrapper(wrapper)
+        # from wrapper_dev.aarhus_parking.aarhusparkingwrapper import AarhusParkingWrapper
+        # wrapper = AarhusParkingWrapper()
+        # self.addWrapper(wrapper)
         # from wrapper_dev.brasov_pollution.brasovpollutionwrapper import BrasovPollutionWrapper
         # wrapper = BrasovPollutionWrapper()
         # self.addWrapper(wrapper)
@@ -225,12 +225,15 @@ class ResourceManagement(virtualisation.wrapper.wrapperoutputreceiver.AbstractRe
         # self.addWrapper(wrapper)
         # wrapper = BrasovIncidentWrapper1()
         # self.addWrapper(wrapper)
-#         from wrapper_dev.aarhus_pollution.aarhuspollutionwrapper import ComposedAarhusPollutionWrapper
-#         wrapper = ComposedAarhusPollutionWrapper()
-#         self.addWrapper(wrapper)
-#         from wrapper_dev.twitter_stream.twitter import AarhusTwitterWrapper
-#         wrapper = AarhusTwitterWrapper()
-#         self.addWrapper(wrapper)
+        # from wrapper_dev.aarhus_pollution.aarhuspollutionwrapper import ComposedAarhusPollutionWrapper
+        # wrapper = ComposedAarhusPollutionWrapper()
+        # self.addWrapper(wrapper)
+        # from wrapper_dev.twitter_stream.twitter import AarhusTwitterWrapper
+        # wrapper = AarhusTwitterWrapper()
+        # self.addWrapper(wrapper)
+        from wrapper_dev.WrapperBusStations.brasovbusstationwrapper import BrasovBusStationWrapper
+        wrapper = BrasovBusStationWrapper()
+        self.addWrapper(wrapper)
 
         if self.args.eventannotation:
             from wrapper_dev.aarhus_traffic.aarhustrafficeventwrapper import AarhusTrafficEventWrapper
@@ -238,6 +241,7 @@ class ResourceManagement(virtualisation.wrapper.wrapperoutputreceiver.AbstractRe
             self.eventWrapper.registerEvent(atew.getEventDescription())
 
     def addWrapper(self, wrapper):
+        # TODO: this should not be here
         if ResourceManagement.args.cleartriplestore:
             self.deleteGraphs(wrapper)
         sd = wrapper.getSensorDescription()
@@ -254,7 +258,7 @@ class ResourceManagement(virtualisation.wrapper.wrapperoutputreceiver.AbstractRe
                         #     self.sql.create_table(_sd)
                         L.i("added wrapper with ID", _sd.sensorID)
                     except Exception as ex:
-                        L.e("Error deploying wrapper:", ex)
+                        L.e("Error deploying wrapper:", str(ex))
             else:
                 try:
                     sd.test()
@@ -266,7 +270,7 @@ class ResourceManagement(virtualisation.wrapper.wrapperoutputreceiver.AbstractRe
                     #     self.sql.create_table(sd)
                     L.i("added wrapper with ID", sd.sensorID)
                 except Exception as ex:
-                    L.e("Error deploying wrapper:", ex)
+                    L.e("Error deploying wrapper:", str(ex))
 
             if ResourceManagement.args.triplestore or ResourceManagement.args.messagebus:
                 # StaticAnnotator.staticAnnotationSensor(wrapper, self.config, self.messageBusQueue, self.rabbitmqchannel)
@@ -275,7 +279,7 @@ class ResourceManagement(virtualisation.wrapper.wrapperoutputreceiver.AbstractRe
                 wrapper.setMessageBusQueue(self.messageBusQueue)
             self.wrappers.append(wrapper)
         except Exception as ex:
-            L.e(self.__class__.__name__, "Error in addWrapper:", ex)
+            L.e(self.__class__.__name__, "Error in addWrapper:", str(ex))
 
     def removeWrapper(self, uuid):
         """
@@ -380,7 +384,7 @@ class ResourceManagement(virtualisation.wrapper.wrapperoutputreceiver.AbstractRe
                     startDate = tmp
                 self.clock.setTimeframe(startDate, endDate)
             except Exception as e:
-                L.e("Problem parsing start- or end date:", e)
+                L.e("Problem parsing start- or end date:", str(e))
                 raise e
 
         else:
@@ -485,14 +489,14 @@ class ResourceManagement(virtualisation.wrapper.wrapperoutputreceiver.AbstractRe
 
     def aggregateHandler(self, item):
         #TODO
-        # data, sensordescription = item
-        # aggs = self.aggregator.aggregate(data, sensordescription)
-        # if ResourceManagement.args.messagebus and aggs:
-        #     for agg in aggs:
-        #         annotated_agg = self.annotator.annotateAggregation(agg, sensordescription)
-        #         msg = annotated_agg.serialize(format='n3')
-        #         self.messageBusQueue.add((msg, RabbitMQ.exchange_aggregated_data, sensordescription.messagebus.routingKey))
-        #     del aggs
+        data, sensordescription = item
+        aggs = self.aggregator.aggregate(data, sensordescription)
+        if ResourceManagement.args.messagebus and aggs:
+            for agg in aggs:
+                annotated_agg = self.annotator.annotateAggregation(agg, sensordescription)
+                msg = annotated_agg.serialize(format='n3')
+                self.messageBusQueue.add((msg, RabbitMQ.exchange_aggregated_data, sensordescription.messagebus.routingKey))
+            del aggs
         pass
 
     def receive(self, parsedData, sensordescription, clock, quality):
@@ -542,7 +546,7 @@ class ResourceManagement(virtualisation.wrapper.wrapperoutputreceiver.AbstractRe
                 self.ui.api.update_observation_cache(str(sensordescription.uuid), message)
         if ResourceManagement.args.triplestore:
             # TODO: The following line is commented out, since the Virtuoso makes so much trouble
-            ThreadedTriplestoreAdapter.getOrMake(sensordescription.graphName).addGraph(g)
+            # ThreadedTriplestoreAdapter.getOrMake(sensordescription.graphName).addGraph(g)
             pass
         if ResourceManagement.args.messagebus or ResourceManagement.args.triplestore:
             del g
