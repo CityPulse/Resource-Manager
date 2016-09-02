@@ -1,0 +1,28 @@
+1377,1383c1377,1389
+< # these have "native" syntax in N3/SPARQL
+< _PLAIN_LITERAL_TYPES = (
+<     _XSD_INTEGER,
+<     _XSD_BOOLEAN,
+<     _XSD_DOUBLE,
+<     _XSD_DECIMAL,
+< )
+---
+> ### patch by Marten Fischer
+> import sys
+> if sys.version_info >= (2,7):
+>     _PLAIN_LITERAL_TYPES = ()
+> else:
+>     # these have "native" syntax in N3/SPARQL
+>     _PLAIN_LITERAL_TYPES = (
+>         _XSD_INTEGER,
+>         _XSD_BOOLEAN,
+>         _XSD_DOUBLE,
+>         _XSD_DECIMAL,
+>     )
+> ### end patch
+1421c1427,1429
+<     (datetime, (lambda i:i.isoformat(), _XSD_DATETIME)),
+---
+>     ### patch by Marten Fischer
+>     (datetime, (lambda i:datetime.strftime(i, "%Y-%m-%dT%H:%M:%S") + ".000Z", _XSD_DATETIME)),
+>     ### end patch

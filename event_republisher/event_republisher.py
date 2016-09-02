@@ -20,7 +20,7 @@ from rabbitmq import RabbitMQ
 ### CONFIG START
 
 # specify the MessageBus Exchange where repeatable events shall be received
-REPEATABLE_EVENTS_EXCHANGE = RabbitMQ.exchange_repeatable_events #RabbitMQ.exchange_events
+REPEATABLE_EVENTS_EXCHANGE = RabbitMQ.exchange_repeatable_events #RabbitMQ.exchange_events #
 
 # specifiy the MessageBus Exchange where the events will be republished on
 EVENTS_EXCHANGE = RabbitMQ.exchange_events
@@ -30,8 +30,8 @@ REPUBLISH_INTERVAL = 60
 
 ### CONFIG END
 
-time_format = "%Y-%m-%dT%H:%M:%S.%f"
-print_time = lambda time_object: datetime.datetime.strftime(time_object, time_format)
+time_format = "%Y-%m-%dT%H:%M:%S" # we don't care about milliseconds
+print_time = lambda time_object: datetime.datetime.strftime(time_object, time_format) #+ ".000Z"
 
 event_buffer = {}
 stop_thread = False
@@ -59,17 +59,22 @@ def republish_thread():
 			evt.update_time()
 			print"republishing event", evt, "on routing key", rk
 			# republish on the message bus
-			RabbitMQ.sendMessage(evt.n3(), EVENTS_EXCHANGE, rk)
+			# RabbitMQ.sendMessage(evt.n3(), EVENTS_EXCHANGE, rk)
+			print evt.n3()
 		print "event buffer length", len(event_buffer)
 
 class RepeatableEvent(object):
 	def __init__(self, graph_n3, event_id):
 		self.g = rdflib.Graph()
 		self.g.parse(data=graph_n3, format='n3')
-		self.event_type = self.find_event_type()
-		info = self.inspect_event(self.g)
-		self.event_id, self.lvl = RepeatableEvent.get_id_lvl(info)
-		self.event_id = event_id
+
+		self.event_id, self.event_type = self.find_event_type()
+		if "#" in self.event_id:
+			self.event_id = self.event_id.split("#")[1]
+		elif ":" in self.event_id:
+			self.event_id = self.event_id.split(":")[1]
+
+		self.lvl = self.inspect_event(self.g)
 
 	def __repr__(self):
 		return self.event_id + "@" + self.lvl
@@ -77,44 +82,24 @@ class RepeatableEvent(object):
 	def find_event_type(self):
 		for stmt in self.g.subject_objects(rdflib.URIRef("http://www.w3.org/1999/02/22-rdf-syntax-ns#type")):
 			if stmt[0].startswith("http://"):
-				return str(stmt[1])
+				return str(stmt[0]), str(stmt[1])
 
 	def inspect_event(self, evt):
+		# Get the level of the event.
 		lvl = None
-		source = None
-		_type = None
-
 		q = "select ?s ?o WHERE {?s sao:hasLevel ?o}"
 		qres = evt.query(q)
 		for _qres in qres:
 			_, lvl = _qres
 
-		q = "select ?s ?o WHERE {?s ec:hasSource ?o}"
-		qres = evt.query(q)
-		for _qres in qres:
-			_, source = _qres
-
-		q = "select ?s ?o WHERE {?s sao:hasType ?o}"
-		qres = evt.query(q)
-		for _qres in qres:
-			_, _type = _qres
-
+		# Wuery for the event itself. Needed to update the time later
 		q = "select ?s ?o WHERE {?s a <" + str(self.event_type) + "> }"
-		# print q
 		self.myself = "-"
 		qres = evt.query(q)
 		for _qres in qres:
-			# print "subject %s %s" % _qres
 			self.myself, _ = _qres
 
-		t = (lvl, source, _type)
-		t = map(lambda x: str(x), t)
-		return t
-
-	@classmethod
-	def get_id_lvl(cls, evt_details):
-		lvl, source, _type = evt_details
-		return ''.join([_type, '@', source]), lvl
+		return str(lvl)
 
 	def update_time(self):
 		"""Updates the timestamp in a RDF event graph"""
@@ -169,6 +154,7 @@ class MessageBusConsumer(object):
 
     def onMessage(self, ch, method, properties, body):
         # print method.routing_key
+        # print body
         evt_received(body, method.routing_key)
 
 def main():
@@ -201,49 +187,3 @@ def evt_received(evt, routing_key):
 
 if __name__ == '__main__':
 	main()
-
-	#TODO remove test for processing events
-# 	td = """@prefix geo:   <http://www.w3.org/2003/01/geo/wgs84_pos#> .
-# @prefix sao:   <http://purl.oclc.org/NET/UNIS/sao/sao#> .
-# @prefix tl:    <http://purl.org/NET/c4dm/timeline.owl#> .
-# @prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
-# @prefix prov:  <http://www.w3.org/ns/prov#> .
-# @prefix ec:    <http://purl.oclc.org/NET/UNIS/sao/ec#> .
-# sao:4d2aebf3-eb0d-4cb2-9837-9f408017af12         a                ec:PublicParking ;
-#         ec:hasSource     "SENSOR_0816d088-3af8-540e-b89b-d99ac63fa886" ;
-#         sao:hasLevel     "2"^^xsd:long ;
-#         sao:hasLocation  [ a        geo:Instant ;
-#                            geo:lat  "56.15"^^xsd:double ;
-#                            geo:lon  "10.216667"^^xsd:double
-#                          ] ;
-#         sao:hasType      ec:TransportationEvent ;
-#         tl:time          "2016-08-30T06:57:55.911Z"^^xsd:dateTime .
-# """
-# 	re = RepeatableEvent(td, "none")
-# 	print re.find_event_type(td)
-
-# 	td2 = """
-# 	@prefix geo:   <http://www.w3.org/2003/01/geo/wgs84_pos#> .
-# @prefix sao:   <http://purl.oclc.org/NET/UNIS/sao/sao#> .
-# @prefix tl:    <http://purl.org/NET/c4dm/timeline.owl#> .
-# @prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
-# @prefix prov:  <http://www.w3.org/ns/prov#> .
-# @prefix ec:    <http://purl.oclc.org/NET/UNIS/sao/ec#> .
-
-# sao:4d2aebf3-eb0d-4cb2-9837-9f408017af12
-#         a                ec:PublicParking ;
-#         ec:hasSource     "SENSOR_0816d088-3af8-540e-b89b-d99ac63fa886" ;
-#         sao:hasLevel     "0"^^xsd:long ;
-#         sao:hasLocation  [ a        geo:Instant ;
-#                            geo:lat  "56.15"^^xsd:double ;
-#                            geo:lon  "10.216667"^^xsd:double
-#                          ] ;
-#         sao:hasType      ec:TransportationEvent ;
-#         tl:time          "2016-08-30T06:57:55.911Z"^^xsd:dateTime .
-# """
-
-# 	evt_received(td)
-# 	raw_input("enter to continue")
-# 	evt_received(td2)
-	# raw_input("enter to continue")
-	# stop_thread = True
