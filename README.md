@@ -129,7 +129,7 @@ More details for this component can be found in the CityPulse Deliverable 5.3 "R
 
 Contributers
 ------------
-The Resource Management was developed as part of the EU project CityPulse. The consortium members University of Surrey and University of Applied Sciences provided the main contributions for this component.
+The Resource Management was developed as part of the EU project CityPulse. The consortium members University of Surrey and University of Applied Sciences Osnabrück provided the main contributions for this component.
 
 License of historical data
 --------------------------
