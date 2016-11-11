@@ -1,6 +1,6 @@
 import cherrypy
 import os.path
-
+import json
 from virtualisation.misc.jsonobject import JSONObject as JOb
 from virtualisation.misc.utils import formatSensorID, valueToBoolean
 from virtualisation.triplestore.threadedtriplestoreadapter import ThreadedTriplestoreAdapter
@@ -19,6 +19,10 @@ class Api(object):
 
     def set_static_stream_data(self, sensor_uuid, data):
         self.static_stream_data_cache[sensor_uuid] = data
+
+    @cherrypy.expose
+    def get_status(self):
+        return self.rm.status.dumps()
 
     @cherrypy.expose
     def listwrapper(self):
@@ -180,21 +184,46 @@ class Api(object):
             resp.message = "No observation with the UUID " + uuid + " cached."
         return resp.dumps()
 
+    # old version that could consume to much memory
+    # @cherrypy.expose
+    # def snapshot_sql(self, uuid, start=None, end=None, format='json', last=False, fields=None, offset=0):
+    #     if self.rm.sql:
+    #         offset = int(offset)
+    #         observations = self.rm.sql.get_observations(uuid, start, end, format, last, fields, offset)
+    #         data = JOb(observations) # TODO replace with the following method when City Dashboard is modified
+    #         return data.dumps()
+    #     else:
+    #         return "Error. SQL feature not enabled in Resource Management"
+
+    # def snapshot_sql2(self, uuid, start=None, end=None, format='json', last=False, fields=None, offset=0):
+    # new version with pagination
     @cherrypy.expose
-    def snapshot_sql(self, uuid, start=None, end=None, format='json', last=False, fields=None):
+    def snapshot_sql(self, uuid, start=None, end=None, format='json', last=False, fields=None, offset=0):
         if self.rm.sql:
-            data = self.rm.sql.get_observations(uuid, start, end, format, last, fields)
-            return data
+            offset = int(offset)
+            observations = self.rm.sql.get_observations(uuid, start, end, format, last, fields, offset)
+            data = JOb()
+            data.data = observations
+            #TODO                  remove the 2 below
+            data.next_url = "/api/snapshot_sql2?uuid=%s%s%s%s%s%s%s" % (uuid,
+                  "&start=" + start if start else "",
+                  "&end=" + end if end else "" ,
+                  "&format=" + format,
+                  "&last=" + last if last else "",
+                  "&fields=" + fields if fields else "",
+                  "&offset=" + str(offset + self.rm.sql.PAGINATION_LIMIT)) if len(observations) == self.rm.sql.PAGINATION_LIMIT else ""
+            return data.dumps()
         else:
-            return "error"
+            return "Error. SQL feature not enabled in Resource Management"
 
     @cherrypy.expose
-    def uuids_by_servicecategory(self, service_category, start=None, end=None):
+    def uuids_by_servicecategory(self, service_category, start=None, end=None, offset=0):
         if self.rm.sql:
-            data = self.rm.sql.get_observations_service_category(service_category, start, end)
+            offset = int(offset)
+            data = self.rm.sql.get_observations_service_category(service_category, start, end, offset)
             return data
         else:
-            return "error"
+            return "Error. SQL feature not enabled in Resource Management"
 
     @cherrypy.expose
     def snapshot_quality(self, uuid, start=None, end=None):
@@ -508,7 +537,6 @@ class Api(object):
 
         qualities = []
         for _uuid in uuid:
-            message = None
             wrapper = self.rm.getWrapperByUUID(_uuid)
             message = ""
             if wrapper:

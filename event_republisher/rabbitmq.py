@@ -1,6 +1,8 @@
 import pika
 import pika.exceptions
 import time
+import logging
+logging.basicConfig()
 MessageBusConnectionError = pika.exceptions.AMQPConnectionError
 
 class RabbitMQ(object):
@@ -28,7 +30,7 @@ class RabbitMQ(object):
     @classmethod
     def sendMessage(cls, msg, exchange, routing_key, retry=0):
         try:
-            RabbitMQ.channel.basic_publish(exchange=exchange, routing_key=routing_key, body=msg)
+            RabbitMQ.sendChannel.basic_publish(exchange=exchange, routing_key=routing_key, body=msg)
         except pika.exceptions.ConnectionClosed:
             if retry < 10:
                 print "RabbitMQ connection closed"
@@ -36,7 +38,7 @@ class RabbitMQ(object):
                 print "reconnecting to message bus", retry
                 try:
                     if RabbitMQ.__connect():
-                        RabbitMQ.channel.basic_publish(exchange=exchange, routing_key=routing_key, body=msg)
+                        RabbitMQ.sendChannel.basic_publish(exchange=exchange, routing_key=routing_key, body=msg)
                     else:
                         new_retry = retry + 1
                         RabbitMQ.sendMessage(msg, exchange, routing_key, new_retry)
@@ -44,26 +46,27 @@ class RabbitMQ(object):
                     print "Failed to reconnect to RabbitMQ"
 
     @classmethod
-    def declareExchange(cls, exchange, _type='topic'):
+    def declareExchange(cls, channel, exchange, _type='topic'):
+        global exchangetopics
         # Checks if exchange exists and declares the exchange in case it has not been declared before
         if exchange not in RabbitMQ.exchangetopics:
-            RabbitMQ.channel.exchange_declare(exchange=exchange, exchange_type=_type, auto_delete=False, nowait=False)
-            RabbitMQ.channel.queue_declare(queue='q_' + exchange, passive=False, durable=False, exclusive=False, auto_delete=False, nowait=False, arguments={'x-message-ttl': 600000})
-            RabbitMQ.channel.queue_bind(queue='q_' + exchange, exchange=exchange, routing_key='#')
-            RabbitMQ.exchangetopics.append(exchange)
+            channel.exchange_declare(exchange=exchange, exchange_type=_type, auto_delete=False, nowait=False)
+            channel.queue_declare(queue='q_' + exchange, passive=False, durable=False, exclusive=False, auto_delete=False, nowait=False, arguments={'x-message-ttl': 600000})
+            channel.queue_bind(queue='q_' + exchange, exchange=exchange, routing_key='#')
+            #exchangetopics.append(exchange)
 
     @classmethod
-    def registerExchanges(cls):
+    def registerExchanges(cls, channel):
         for ex in RabbitMQ.exchanges:
             try:
-                RabbitMQ.declareExchange(ex, _type="topic")
+                RabbitMQ.declareExchange(channel, ex, _type="topic")
             except Exception as e:
                 print ('Exchange %s could not be declared: %s' % (ex, e.message))
                 print ('Exception:', str(e))
 
     @classmethod
-    def deleteExchange(cls, exchange):
-        RabbitMQ.channel.exchange_delete(exchange=exchange, nowait=True)
+    def deleteExchange(cls, channel, exchange):
+        channel.exchange_delete(exchange=exchange, nowait=True)
         if exchange in RabbitMQ.exchangetopics:
             del RabbitMQ.exchangetopics[RabbitMQ.exchangetopics.index(exchange)]
 
@@ -86,7 +89,24 @@ class RabbitMQ(object):
 
             RabbitMQ.connection = connection
             RabbitMQ.channel = connection.channel()
-            RabbitMQ.registerExchanges()
+            RabbitMQ.registerExchanges(RabbitMQ.channel)
+
+
+            if RabbitMQ.connection_params_host == 'localhost' and RabbitMQ.connection_params_port is not None:
+                connection = pika.BlockingConnection(pika.ConnectionParameters(host=RabbitMQ.connection_params_host, port=RabbitMQ.connection_params_port, heartbeat_interval=heartbeat_interval, connection_attempts=connection_attempts, retry_delay=retry_delay, socket_timeout=socket_timeout))
+            elif RabbitMQ.connection_params_host == 'localhost':
+                connection = pika.BlockingConnection(pika.ConnectionParameters(host=RabbitMQ.connection_params_host, heartbeat_interval=heartbeat_interval, connection_attempts=connection_attempts, retry_delay=retry_delay, socket_timeout=socket_timeout))
+            else:
+                credentials = pika.PlainCredentials(RabbitMQ.connection_params_username, RabbitMQ.connection_params_password)
+                connection = pika.BlockingConnection(
+                    pika.ConnectionParameters(host=RabbitMQ.connection_params_host, heartbeat_interval=heartbeat_interval, port=RabbitMQ.connection_params_port, credentials=credentials, connection_attempts=connection_attempts, retry_delay=retry_delay, socket_timeout=socket_timeout))
+
+            RabbitMQ.sendConnection = connection
+            RabbitMQ.sendChannel = connection.channel()
+            RabbitMQ.registerExchanges(RabbitMQ.sendChannel)
             return True
         except:
             return False
+
+
+

@@ -15,7 +15,10 @@ import time
 import datetime
 import json
 import os.path
+import sys
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 from rabbitmq import RabbitMQ
+from virtualisation.misc.threads import QueueThread
 
 ### CONFIG START
 
@@ -49,7 +52,7 @@ class Config(object):
 	def __repr__(self):
 		return ", ".join([self.host, str(self.port), str(self.username), str(self.password)])
 
-def republish_thread():
+def republish_thread(qThread):
 	while not stop_thread:
 		time.sleep(REPUBLISH_INTERVAL)
 		if stop_thread:
@@ -59,9 +62,15 @@ def republish_thread():
 			evt.update_time()
 			print"republishing event", evt, "on routing key", rk
 			# republish on the message bus
-			# RabbitMQ.sendMessage(evt.n3(), EVENTS_EXCHANGE, rk)
+			#RabbitMQ.sendMessage(evt.n3(), EVENTS_EXCHANGE, rk)
+			qThread.add((evt.n3(), EVENTS_EXCHANGE, rk))
 			print evt.n3()
 		print "event buffer length", len(event_buffer)
+
+def sendMessage(_tuple):
+	msg, exchange, key = _tuple
+	print "resending event", msg, "on routing key", key
+	RabbitMQ.sendMessage(msg, exchange, key)
 
 class RepeatableEvent(object):
 	def __init__(self, graph_n3, event_id):
@@ -114,11 +123,12 @@ class RepeatableEvent(object):
 class MessageBusConsumer(object):
     """Listener for new events on the message bus."""
 
-    def __init__(self, exchange, key):
+    def __init__(self, exchange, key, qThread):
     	c = Config()
 
         self.exchange = exchange
         self.routing_key = key
+        self.qThread = qThread
         rmq_host = str(c.host)
         rmq_port = c.port
         rmq_username = c.username
@@ -143,7 +153,7 @@ class MessageBusConsumer(object):
             RabbitMQ.channel.queue_bind(exchange=self.exchange, queue=queue_name, routing_key=self.routing_key)
             RabbitMQ.channel.basic_consume(self.onMessage, no_ack=True)
             # register Exchange and Queue for repeatable events
-            RabbitMQ.registerExchanges()
+            RabbitMQ.registerExchanges(RabbitMQ.channel)
             print "start consuming ..."
             RabbitMQ.channel.start_consuming()
         else:
@@ -154,16 +164,21 @@ class MessageBusConsumer(object):
 
     def onMessage(self, ch, method, properties, body):
         # print method.routing_key
-        # print body
+        print "received message: " + body
         evt_received(body, method.routing_key)
+        self.qThread.add((body, EVENTS_EXCHANGE, method.routing_key))
 
 def main():
 	global stop_thread
+	# start sending thread with queue
+	qThread = QueueThread(handler=sendMessage)
+	qThread.start()
+
 	# start thread to republish received events until one with level 0 was received
-	threading.Thread(target=republish_thread).start()
+	threading.Thread(target=republish_thread, args=(qThread,)).start()
 
 	# start listening on the message bus for new 'repeatable' events
-	mbc = MessageBusConsumer(REPEATABLE_EVENTS_EXCHANGE, "#")
+	mbc = MessageBusConsumer(REPEATABLE_EVENTS_EXCHANGE, "#", qThread)
 	threading.Thread(target=mbc.start).start()
 
 	raw_input("Press ENTER to stop.\n")

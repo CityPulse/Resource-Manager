@@ -30,6 +30,7 @@ from virtualisation.resourcemanagement.sql import SQL
 from Quality.Average.averageStreamQuality import AverageStreamQuality
 from virtualisation.misc.utils import dictdeepcopy
 from virtualisation.misc.stat_api import Stat_Api
+from virtualisation.misc.jsonobject import JSONObject
 
 __author__ = 'Marten Fischer (m.fischer@hs-osnabrueck.de)'
 
@@ -42,6 +43,8 @@ class ResourceManagement(virtualisation.wrapper.wrapperoutputreceiver.AbstractRe
     def __init__(self, args):
         L(args.log)
         self.config = JOb(file(os.path.join(os.path.dirname(__file__), "..", "config.json"), "rb"))
+        self.status = JSONObject()
+        self.status.running = False
         self.wrappers = []
         ResourceManagement.args = args
         ResourceManagement.config = self.config
@@ -144,6 +147,7 @@ class ResourceManagement(virtualisation.wrapper.wrapperoutputreceiver.AbstractRe
         files = glob.glob(deployFolder)
         for f in files:
             self.deploy(f)
+        self.status.running = True
 
     def deploy(self, f, autostart=False):
         """

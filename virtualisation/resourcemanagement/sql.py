@@ -3,6 +3,7 @@ from virtualisation.misc.log import Log as L
 import os
 import psycopg2
 import datetime
+import json
 
 __author__ = 'Marten Fischer (m.fischer@hs-osnabrueck.de)'
 
@@ -14,6 +15,7 @@ class SQL(object):
 
     def __init__(self, gdi_config, rm):
         self.rm = rm
+        self.PAGINATION_LIMIT = 100
         connect_str = "host='%s' dbname='%s' user='%s' password='%s' port=%d" % (
             gdi_config.host, gdi_config.database, gdi_config.username, gdi_config.password, gdi_config.port)
         self.conn = psycopg2.connect(connect_str)
@@ -102,7 +104,7 @@ class SQL(object):
         else:
             return value
 
-    def get_observations(self, uuid, start=None, end=None, format='json', onlyLast=False, fields=None):
+    def get_observations(self, uuid, start=None, end=None, format='json', onlyLast=False, fields=None, offset=0):
         from virtualisation.resourcemanagement.resourcemanagement import ResourceManagement
 
         w = self.rm.getWrapperByUUID(uuid)
@@ -113,9 +115,10 @@ class SQL(object):
 
         # prepare query
         _filter = ["sensor_uuid = '%s'" % uuid]
-        order = " ORDER BY sampling_time"
+        order = "ORDER BY sampling_time"
+        limitation = ""
         if onlyLast:
-            order += " DESC LIMIT 1"
+            order += " DESC"
         else:
             if start:
                 _filter.append("sampling_time >= TIMESTAMP '%s'" % start)
@@ -131,8 +134,10 @@ class SQL(object):
             fields_.append("quality")
         else:
             fields_ = SQL.cp_observation_fields
+        limitation = "LIMIT %d" % (1 if onlyLast else self.PAGINATION_LIMIT)
+        query = "SELECT %s FROM %s.cp_observations %s %s %s OFFSET %d;" % (",".join(fields_), SQL.SCHEMA, _filter, order, limitation, offset)
+        # query = "SELECT %s FROM %s.cp_observations %s %s;" % (",".join(fields_), SQL.SCHEMA, _filter, order)
 
-        query = "SELECT %s FROM %s.cp_observations %s %s;" % (",".join(fields_), SQL.SCHEMA, _filter, order)
         L.d("SQL: executing query", query)
 
         try:
@@ -172,18 +177,27 @@ class SQL(object):
                 json_list = []
                 for x in data2:
                     if fields:
-                        y = JOb({})
+                        # y = JOb({})
+                        y = {}
                         for i in range(0, len(fields)):
-                            ft = fields[i]
-                            y[ft] = JOb(x[i])
-                        y.quality = JOb(x[-1])
-                        y.fields = fields
+                            # ft = fields[i]
+                            # y[ft] = JOb(x[i])
+                            y[fields[i]] = x[i]
+                        # y.quality = JOb(x[-1])
+                        # y.fields = fields
+                        y["fields"] = fields
+                        y["quality"] = x[-1]
+
                     else:
-                        y = JOb(x[3])
-                        y.quality = JOb(x[4])
+                        # y = JOb(x[3])
+                        # y.quality = JOb(x[4])
+                        y = x[3]
+                        y["quality"] = x[4]
                     json_list.append(y)
                 del query
-                return JOb(json_list).dumps()
+                del data2
+                # return JOb(json_list).dumps()
+                return json_list
 
         except Exception as e:
             L.e("SQL:", e)
@@ -209,14 +223,15 @@ class SQL(object):
         else:
             return None, None
 
-    def get_observations_service_category(self, service_category, start=None, end=None):
+    def get_observations_service_category(self, service_category, start=None, end=None, offset=0):
         cursor = self.conn.cursor()
         query = "SELECT sensor_uuid from cp_sensors WHERE sercvice_category = '" + service_category + "';"
         cursor.execute(query)
         data = cursor.fetchall()
+        all_observations = []
         for sensor_uuid, in data:
-            yield self.get_observations(sensor_uuid, start, end, format='nt')
-        return
+            all_observations.append(self.get_observations(sensor_uuid, start, end, format='nt', offset=offset))
+        return all_observations
 
 # if __name__ == "__main__":
 #     cnf = JOb({

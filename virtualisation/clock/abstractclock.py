@@ -85,10 +85,16 @@ class AbstractClock(object):
         return _id
 
     def removeNotification(self, _id):
-        del self.notifications[_id]
+        if _id in self.notifications:
+            del self.notifications[_id]
+        else:
+            print _id, "not in notifications"
 
     def removeJob(self, _id):
-        del self.jobs[_id]
+        if _id in self.jobs:
+            del self.jobs[_id]
+            return True
+        return False
 
     def resetJob(self, _id):
         self.jobs[_id].reseet()
